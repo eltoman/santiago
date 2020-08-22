@@ -1,35 +1,30 @@
-package com.emstudies.santiago.controller;
+package com.emstudies.santiago.api.controller;
 
+import com.emstudies.santiago.api.AccountApi;
 import com.emstudies.santiago.entities.Account;
 import com.emstudies.santiago.service.AccountService;
-import io.swagger.annotations.Api;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 
-@RestController
-@RequestMapping(path = "/api/v1/account/")
-@Api(value = "AccountsControllerAPI", produces = MediaType.APPLICATION_JSON_VALUE)
-public class AccountController {
+@Component
+public class AccountController implements AccountApi {
 
     @Autowired
     AccountService accountService;
 
-    @GetMapping(value = "/{id}")
+    @Override
     public ResponseEntity<Account> findById(@PathVariable Long id){
         Account account = accountService.findById(id);
         return ResponseEntity.ok().body(account);
     }
 
-    @PostMapping
+    @Override
     public ResponseEntity<Account> insert(@RequestBody Account account){
         account = accountService.insert(account);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
@@ -37,13 +32,13 @@ public class AccountController {
         return ResponseEntity.created(uri).body(account);
     }
 
-    @DeleteMapping(value = "/{id}")
+    @Override
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         accountService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping(value = "/{id}")
+    @Override
     public ResponseEntity<Account> update(@PathVariable Long id, @RequestBody Account account) {
         account = accountService.update(id, account);
         return ResponseEntity.ok().body(account);
