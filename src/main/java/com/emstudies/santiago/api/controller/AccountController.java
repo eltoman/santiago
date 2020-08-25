@@ -25,11 +25,11 @@ public class AccountController implements AccountApi {
     }
 
     @Override
-    public ResponseEntity<Account> insert(@RequestBody Account account){
+    public ResponseEntity<Void> insert(@RequestBody Account account){
         account = accountService.insert(account);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(account.getId()).toUri();
-        return ResponseEntity.created(uri).body(account);
+        return ResponseEntity.accepted().body(null);
     }
 
     @Override
