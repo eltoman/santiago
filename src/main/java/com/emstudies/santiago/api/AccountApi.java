@@ -2,7 +2,6 @@ package com.emstudies.santiago.api;
 
 import com.emstudies.santiago.entities.Account;
 import io.swagger.annotations.Api;
-import io.swagger.models.Response;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

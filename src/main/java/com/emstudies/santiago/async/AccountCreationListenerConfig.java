@@ -1,6 +1,8 @@
 package com.emstudies.santiago.async;
 
 import com.emstudies.santiago.infra.async.rabbitmq.AsyncConnectionQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.core.Queue;
@@ -21,7 +23,7 @@ import static com.emstudies.santiago.infra.async.rabbitmq.RabbitMqExchanges.*;
 @Configuration
 public class AccountCreationListenerConfig {
 
-
+    Logger logger = LoggerFactory.getLogger(AccountCreationListenerConfig.class);
     private TopicExchange exchange = new TopicExchange(CHILE.getExchange());
     private static final AsyncConnectionQueue QUEUE = ACCOUNT_CREATION;
     private static final AsyncConnectionQueue QUEUE_PARKING_LOT = ACCOUNT_CREATION_PARKING_LOT;
@@ -54,7 +56,7 @@ public class AccountCreationListenerConfig {
             amqpAdmin.declareQueue(retryQueue);
 
         }catch (Exception e){
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
 
         return container;
