@@ -1,39 +1,41 @@
-package com.emstudies.santiago.configuration.async;
+package com.emstudies.santiago.async;
 
+import com.emstudies.santiago.infra.async.rabbitmq.AsyncConnectionQueue;
+import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import com.emstudies.santiago.async.AccountCreationListener;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.emstudies.santiago.configuration.async.AsyncConnectionQueue.*;
+import static com.emstudies.santiago.infra.async.rabbitmq.AsyncConnectionQueue.*;
+import static com.emstudies.santiago.infra.async.rabbitmq.RabbitMqExchanges.*;
 
 @Configuration
 public class AccountCreationListenerConfig {
 
 
-    private static final String EXCHANGE = "CHILE";
+    private TopicExchange exchange = new TopicExchange(CHILE.getExchange());
     private static final AsyncConnectionQueue QUEUE = ACCOUNT_CREATION;
     private static final AsyncConnectionQueue QUEUE_PARKING_LOT = ACCOUNT_CREATION_PARKING_LOT;
     private static final AsyncConnectionQueue QUEUE_RETRY = ACCOUNT_CREATION_RETRY;
 
-    @Value("MESSAGE_TTL_DEFAULT")
-    private String MESSAGE_TTL_DEFAULT;
-
     @Autowired
     private ConnectionFactory connectionFactory;
 
+    @Autowired
+    private AmqpAdmin amqpAdmin;
+
     @Bean
-    public MessageListener accountCreationListener(){
-        return new AccountCreationListener();
+    public ConnectionFactory connectionFactory() {
+        return new CachingConnectionFactory("localhost");
     }
 
     @Bean
@@ -46,6 +48,11 @@ public class AccountCreationListenerConfig {
 
             container = createContainer(new Queue[]{queue, parkingLotQueue, retryQueue});
 
+            amqpAdmin.declareExchange(exchange);
+            amqpAdmin.declareQueue(queue);
+            amqpAdmin.declareQueue(parkingLotQueue);
+            amqpAdmin.declareQueue(retryQueue);
+
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -53,9 +60,14 @@ public class AccountCreationListenerConfig {
         return container;
     }
 
+    @Bean
+    public MessageListener accountCreationListener(){
+        return new AccountCreationListener();
+    }
+
     private Queue buildQueue() {
         Map<String, Object> args = new HashMap<>();
-        args.put("x-dead-letter-exchange", EXCHANGE);
+        args.put("x-dead-letter-exchange", CHILE.getExchange());
         args.put("x-dead-letter-routing-key", QUEUE_PARKING_LOT.getRoutingKey());
 
         return new Queue(QUEUE.getQueue(), true, false,false, args);
@@ -63,9 +75,9 @@ public class AccountCreationListenerConfig {
 
     private Queue buildParkingLotQueue() {
         Map<String, Object> args = new HashMap<>();
-        args.put("x-dead-letter-exchange", EXCHANGE);
+        args.put("x-dead-letter-exchange", CHILE.getExchange());
         args.put("x-dead-letter-routing-key", QUEUE_RETRY.getRoutingKey());
-        args.put("x-message-ttl", MESSAGE_TTL_DEFAULT);
+        args.put("x-message-ttl", 18000);
 
         return new Queue(QUEUE_PARKING_LOT.getQueue(), true, false,false, args);
     }
@@ -76,11 +88,10 @@ public class AccountCreationListenerConfig {
 
     private SimpleMessageListenerContainer createContainer(Queue[] queues) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
+        container.setConnectionFactory(connectionFactory());
+        container.setAutoStartup(true);
         container.setQueues(queues);
         container.setMessageListener(accountCreationListener());
-        container.setMaxConcurrentConsumers(2);
-
         return container;
     }
 }

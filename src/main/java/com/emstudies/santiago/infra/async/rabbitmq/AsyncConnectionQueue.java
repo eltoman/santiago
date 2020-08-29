@@ -1,4 +1,4 @@
-package com.emstudies.santiago.configuration.async;
+package com.emstudies.santiago.infra.async.rabbitmq;
 
 public enum AsyncConnectionQueue {
 

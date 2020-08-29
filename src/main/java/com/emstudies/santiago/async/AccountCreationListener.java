@@ -5,6 +5,7 @@ import org.springframework.amqp.core.MessageListener;
 
 public class AccountCreationListener implements MessageListener {
 
+
     @Override
     public void onMessage(Message message) {
 
